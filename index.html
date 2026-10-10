@@ -32,9 +32,11 @@ button{cursor:pointer}
 .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:0 calc(96px + env(safe-area-inset-bottom,0px))}
 
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;display:grid;gap:10px}
-.titlerow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.titlerow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 12px}
 h1{font-family:var(--display);font-weight:800;font-size:1.75rem;letter-spacing:-.02em;margin:0;line-height:1;text-wrap:balance}
 h1 span{color:var(--orange)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:40px;height:40px;flex:none;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
 .sum{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .search{display:flex;gap:8px}
 .search input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 16px}
@@ -138,7 +140,7 @@ nav.tabs button[aria-selected="true"]{color:var(--olive)}
 <div class="wrap">
   <header class="top">
     <div class="titlerow">
-      <h1>Vorrats<span>kammer</span></h1>
+      <div class="brand"><svg xmlns="http://www.w3.org/2000/svg" class="logo" aria-hidden="true" viewBox="0 0 1024 1024"><defs><linearGradient id="lgBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#65772F"/><stop offset="1" stop-color="#46561D"/></linearGradient><linearGradient id="lgFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F29A4E"/><stop offset="1" stop-color="#D9701A"/></linearGradient><clipPath id="lgJar"><rect x="252" y="330" width="520" height="520" rx="110"/></clipPath></defs><rect width="1024" height="1024" fill="url(#lgBg)"/><ellipse cx="512" cy="872" rx="300" ry="34" fill="#2F3A12" opacity=".45"/><rect x="312" y="290" width="400" height="70" rx="20" fill="#EEF1DE"/><rect x="252" y="330" width="520" height="520" rx="110" fill="#EEF1DE"/><g clip-path="url(#lgJar)"><path d="M240 520 C 360 490, 470 545, 560 515 S 720 490, 790 520 L790 870 L240 870 Z" fill="url(#lgFill)"/><circle cx="350" cy="790" r="44" fill="#C55F10" opacity=".55"/><circle cx="690" cy="610" r="34" fill="#C55F10" opacity=".45"/><circle cx="640" cy="800" r="52" fill="#C55F10" opacity=".4"/></g><rect x="292" y="400" width="34" height="300" rx="17" fill="#FFFFFF" opacity=".75"/><rect x="362" y="560" width="300" height="190" rx="28" fill="#FFF9EC"/><path d="M432 655 L490 712 L596 600" fill="none" stroke="#56662A" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/><rect x="282" y="176" width="460" height="128" rx="32" fill="#E07A22"/><rect x="282" y="176" width="460" height="40" rx="20" fill="#F29A4E"/><rect x="318" y="236" width="388" height="14" rx="7" fill="#B95A0C" opacity=".55"/><rect x="318" y="268" width="388" height="14" rx="7" fill="#B95A0C" opacity=".55"/></svg><h1>Vorrats<span>kammer</span></h1></div>
       <div class="sum" id="sum">wird geladen …</div>
     </div>
     <div class="search" id="searchbox"><input id="q" type="search" placeholder="Produkt suchen …" aria-label="Produkt suchen" autocomplete="off"></div>
