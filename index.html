@@ -1,0 +1,517 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Vorratskammer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-column phone app, sticky header + search, list grouped by Lagerort, bottom tab bar (Bestand / Nachkaufen / Mehr) */
+:root{
+  --bg:#F1F2E8; --surface:#FFFFFF; --fg:#22271A; --muted:#6A7058; --line:#DCDFCB;
+  --olive:#56662A; --olive-ink:#FFFFFF; --olive-soft:#E2E7CC;
+  --orange:#D9701A; --orange-ink:#FFFFFF; --orange-soft:#FBE3CC; --orange-text:#A24F0A;
+  --empty:#B23E1C; --empty-soft:#F6D8CC;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15180F; --surface:#1F2317; --fg:#ECEEDF; --muted:#A3A88E; --line:#30362A;
+  --olive:#A5B868; --olive-ink:#15180F; --olive-soft:#2C3420;
+  --orange:#F0954A; --orange-ink:#1A1208; --orange-soft:#3A2A17; --orange-text:#F6B47C;
+  --empty:#F07A57; --empty-soft:#3D221A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15180F; --surface:#1F2317; --fg:#ECEEDF; --muted:#A3A88E; --line:#30362A;
+  --olive:#A5B868; --olive-ink:#15180F; --olive-soft:#2C3420;
+  --orange:#F0954A; --orange-ink:#1A1208; --orange-soft:#3A2A17; --orange-text:#F6B47C;
+  --empty:#F07A57; --empty-soft:#3D221A; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:0 calc(96px + env(safe-area-inset-bottom,0px))}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;display:grid;gap:10px}
+.titlerow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:800;font-size:1.75rem;letter-spacing:-.02em;margin:0;line-height:1;text-wrap:balance}
+h1 span{color:var(--orange)}
+.sum{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.search{display:flex;gap:8px}
+.search input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 16px}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--olive);border-color:var(--olive);color:var(--olive-ink)}
+
+h2.place{font-family:var(--display);font-weight:600;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--olive);margin:18px 0 6px;display:flex;justify-content:space-between}
+h2.place small{color:var(--muted);letter-spacing:0;text-transform:none;font-family:var(--body);font-weight:500}
+.list{background:var(--surface);border-radius:var(--r);overflow:hidden;border:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .name{flex:1;min-width:0;background:none;border:0;padding:4px 0;text-align:left;display:grid;gap:2px}
+.row .name b{font-weight:600;overflow-wrap:anywhere}
+.pill{justify-self:start;font-size:.72rem;font-weight:700;border-radius:999px;padding:1px 8px}
+.pill.low{background:var(--orange-soft);color:var(--orange-text)}
+.pill.zero{background:var(--empty-soft);color:var(--empty)}
+.row.low{box-shadow:inset 4px 0 0 var(--orange)}
+.row.zero{box-shadow:inset 4px 0 0 var(--empty)}
+.stepper{display:flex;align-items:center;gap:2px;flex:none}
+.stepper button{width:40px;height:40px;border-radius:12px;border:0;background:var(--olive-soft);color:var(--olive);font-size:1.4rem;font-weight:700;line-height:1;display:grid;place-items:center}
+.stepper button.plus{background:var(--olive);color:var(--olive-ink)}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper output{min-width:36px;text-align:center;font-family:var(--display);font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums}
+
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:24px 18px;margin-top:18px;display:grid;gap:12px;text-align:left}
+.empty h3{font-family:var(--display);margin:0;font-size:1.2rem}
+.empty p{margin:0;color:var(--muted)}
+
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;border:0;background:var(--orange);color:var(--orange-ink);border-radius:999px;padding:14px 20px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.18);display:flex;gap:8px;align-items:center}
+.fab span{font-size:1.3rem;line-height:1}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:7;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+nav.tabs .in{display:grid;grid-template-columns:repeat(3,1fr);width:100%;max-width:560px}
+nav.tabs button{background:none;border:0;padding:8px 4px;display:grid;justify-items:center;gap:2px;font-size:.78rem;font-weight:600;color:var(--muted);position:relative}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-selected="true"]{color:var(--olive)}
+.badge{position:absolute;top:2px;left:calc(50% + 6px);background:var(--orange);color:var(--orange-ink);border-radius:999px;font-size:.7rem;padding:0 6px;min-width:18px;text-align:center;font-variant-numeric:tabular-nums}
+
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;background:var(--olive);color:var(--olive-ink)}
+.btn.orange{background:var(--orange);color:var(--orange-ink)}
+.btn.ghost{background:var(--olive-soft);color:var(--olive)}
+.btn.danger{background:var(--empty-soft);color:var(--empty)}
+.btn:disabled{opacity:.45;cursor:default}
+
+/* Nachkaufen */
+.shop .row{gap:12px}
+.check{width:28px;height:28px;flex:none;border-radius:8px;border:2px solid var(--olive);background:transparent;display:grid;place-items:center;color:var(--olive-ink)}
+.check[aria-checked="true"]{background:var(--olive)}
+.check svg{width:16px;height:16px;visibility:hidden}
+.check[aria-checked="true"] svg{visibility:visible}
+.shop .meta{flex:1;min-width:0;display:grid;gap:2px}
+.shop .meta small{color:var(--muted)}
+.shop .row.done .meta b{text-decoration:line-through;color:var(--muted)}
+.buyqty{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)}
+.buyqty .stepper button{width:32px;height:32px;font-size:1.1rem;border-radius:10px}
+.buyqty .stepper output{min-width:26px;font-size:1rem}
+.shopbar{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom,0px));margin-top:14px;display:flex}
+.shopbar .btn{flex:1}
+.lead{color:var(--muted);margin:4px 0 0;font-size:.92rem}
+.addshop{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;margin-top:4px}
+.addshop>label{font-size:.8rem;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.addshop input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 12px}
+.newplace{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:.88rem;color:var(--muted)}
+.newplace select{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 10px}
+.xbtn{flex:none;width:36px;height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:1.4rem;line-height:1}
+
+/* Mehr */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;margin-top:16px}
+.card h3{margin:0;font-family:var(--display);font-size:1.1rem}
+.card p{margin:0;color:var(--muted);font-size:.92rem}
+.placelist{display:grid;gap:6px}
+.placeitem{display:flex;align-items:center;gap:8px}
+.placeitem span{flex:1;min-width:0}
+.placeitem small{color:var(--muted);font-variant-numeric:tabular-nums}
+.placeitem button{border:0;background:none;color:var(--empty);font-weight:700;padding:6px}
+.inline{display:flex;gap:8px;flex-wrap:wrap}
+.inline input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px}
+.status{font-size:.82rem;color:var(--muted)}
+
+/* Sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,12,6,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:14px;max-height:90%;overflow-y:auto}
+.sheet h3{margin:0;font-family:var(--display);font-size:1.3rem}
+.field{display:grid;gap:6px}
+.field label{font-size:.8rem;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:12px}
+.sheet .actions{display:flex;gap:8px;flex-wrap:wrap}
+.sheet .actions .btn{flex:1}
+.confirm{background:var(--empty-soft);color:var(--empty);border-radius:10px;padding:10px 12px;display:grid;gap:8px;font-size:.92rem}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;max-width:calc(100% - 32px);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .2s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="titlerow">
+      <h1>Vorrats<span>kammer</span></h1>
+      <div class="sum" id="sum">wird geladen …</div>
+    </div>
+    <div class="search" id="searchbox"><input id="q" type="search" placeholder="Produkt suchen …" aria-label="Produkt suchen" autocomplete="off"></div>
+    <div class="chips" id="chips" role="group" aria-label="Nach Lagerort filtern"></div>
+  </header>
+
+  <main id="view-stock"></main>
+  <main id="view-shop" hidden></main>
+  <main id="view-more" hidden></main>
+</div>
+
+<button class="fab" id="fab" type="button"><span>+</span> Produkt</button>
+
+<nav class="tabs" role="tablist">
+  <div class="in">
+    <button role="tab" id="t-stock" aria-selected="true" data-view="stock">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 12h18M8 8h2M8 16h2"/></svg>Bestand</button>
+    <button role="tab" id="t-shop" aria-selected="false" data-view="shop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7h-7a2 2 0 0 1-2-1.7z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>Einkaufen<span class="badge" id="badge" hidden>0</span></button>
+    <button role="tab" id="t-more" aria-selected="false" data-view="more">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>Mehr</button>
+  </div>
+</nav>
+
+<div id="sheetHost"></div>
+<div id="toastHost"></div>
+
+<script>
+(function(){
+const DEFAULT_PLACES=["Küche","Kühlschrank","Tiefkühler","Vorratsschrank","Keller","Bad","Putzschrank"];
+const EXAMPLES=[["Nudeln","Vorratsschrank",4],["Reis","Vorratsschrank",1],["Dosentomaten","Keller",6],["Kaffee","Küche",2],["Butter","Kühlschrank",1],["Tiefkühlerbsen","Tiefkühler",3],["Klopapier","Bad",8],["Zahnpasta","Bad",1],["Spülmittel","Putzschrank",0],["Waschmittel","Keller",2]];
+
+let db=null, items=new Map(), extras=new Map(), places=DEFAULT_PLACES.slice(), mode="loading";
+let view="stock", query="", filter="";
+const checked=new Map(); // id -> qty bought
+const pendingTimers=new Map();
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const coll=new Intl.Collator("de",{sensitivity:"base"});
+
+/* ---------- storage: shared db, fallback to this browser ---------- */
+function localSave(){try{localStorage.setItem("vorrat-items",JSON.stringify([...items.values()]));localStorage.setItem("vorrat-extras",JSON.stringify([...extras.values()]));localStorage.setItem("vorrat-places",JSON.stringify(places))}catch(e){}}
+function localLoad(){try{const a=JSON.parse(localStorage.getItem("vorrat-items")||"[]");a.forEach(i=>items.set(i.id,i));JSON.parse(localStorage.getItem("vorrat-extras")||"[]").forEach(x=>extras.set(x.id,x));const p=JSON.parse(localStorage.getItem("vorrat-places")||"null");if(Array.isArray(p)&&p.length)places=p}catch(e){}}
+
+async function writeItem(it){
+  items.set(it.id,it); render();
+  if(db){try{await db.doc("items/"+it.id).set({name:it.name,place:it.place,count:it.count,updatedAt:Date.now()})}catch(e){fail(e)}}
+  else localSave();
+}
+async function removeItem(id){
+  items.delete(id); checked.delete(id); render();
+  if(db){try{await db.doc("items/"+id).delete()}catch(e){fail(e)}} else localSave();
+}
+async function writeExtra(x){
+  extras.set(x.id,x); render();
+  if(db){try{const body={name:x.name,itemId:x.itemId||"",place:x.place||"",addedAt:Date.now()};await db.doc("shopextra/"+x.id).set(body)}catch(e){fail(e)}}
+  else localSave();
+}
+async function removeExtra(id){
+  extras.delete(id); checked.delete("e:"+id); render();
+  if(db){try{await db.doc("shopextra/"+id).delete()}catch(e){fail(e)}} else localSave();
+}
+async function savePlaces(){
+  render();
+  if(db){try{await db.doc("config/places").set({list:places})}catch(e){fail(e)}} else localSave();
+}
+function fail(e){
+  const c=e&&e.code;
+  if(c==="invalid_argument") toast("Du kannst diese Liste nur ansehen, nicht ändern.");
+  else if(c==="quota_exceeded") toast("Der Speicher ist voll. Lösche alte Produkte.");
+  else toast("Speichern hat nicht geklappt. Bitte noch einmal versuchen.");
+}
+
+/* debounced count change: show instantly, write once per pause */
+function changeCount(id,delta){
+  const it=items.get(id); if(!it) return;
+  const before=it.count, next=Math.max(0,before+delta);
+  if(next===before) return;
+  it.count=next; render();
+  if(delta<0 && next===1) toast(`${it.name}: nur noch 1 – steht jetzt auf der Einkaufsliste`);
+  if(delta<0 && next===0) toast(`${it.name} ist aufgebraucht`);
+  clearTimeout(pendingTimers.get(id));
+  pendingTimers.set(id,setTimeout(()=>{pendingTimers.delete(id);writeItem({...it})},450));
+}
+
+/* ---------- rendering ---------- */
+const isLow=i=>i.count<=1;
+function sorted(arr){return arr.sort((a,b)=>coll.compare(a.name,b.name))}
+function placeOrder(){
+  const extra=[...new Set([...items.values()].map(i=>i.place))].filter(p=>!places.includes(p));
+  return places.concat(extra);
+}
+
+function render(){
+  const all=[...items.values()];
+  const shop=shopEntries();
+  const totalUnits=all.reduce((s,i)=>s+i.count,0);
+  $("#sum").textContent= mode==="loading"?"wird geladen …":`${all.length} Produkte · ${totalUnits} Stück`;
+  const b=$("#badge"); b.hidden=!shop.length; b.textContent=shop.length;
+  $("#searchbox").hidden=view!=="stock"; $("#chips").hidden=view!=="stock";
+  $("#fab").hidden=view!=="stock";
+  ["stock","shop","more"].forEach(v=>{$("#view-"+v).hidden=v!==view;$("#t-"+v).setAttribute("aria-selected",v===view)});
+  if(view==="stock") renderStock(all); else if(view==="shop") renderShop(shop); else renderMore(all);
+}
+
+/* Einkaufsliste = automatisch alles mit Bestand ≤ 1 + selbst eingetragene Wünsche */
+function findItemByName(name){const n=name.trim().toLowerCase();return [...items.values()].find(i=>i.name.toLowerCase()===n)}
+function linkedItem(x){return (x.itemId&&items.get(x.itemId))||null}
+function shopEntries(){
+  const out=[], lowIds=new Set();
+  sorted([...items.values()].filter(isLow)).sort((a,b)=>a.count-b.count).forEach(i=>{lowIds.add(i.id);out.push({key:"i:"+i.id,name:i.name,item:i,sub:`${i.place} · ${i.count===0?"leer":"noch 1"}`,auto:true})});
+  [...extras.values()].sort((a,b)=>(a.addedAt||0)-(b.addedAt||0)).forEach(x=>{
+    const it=linkedItem(x);
+    if(it&&lowIds.has(it.id)) return; // steht schon automatisch drauf
+    out.push({key:"e:"+x.id,name:it?it.name:x.name,item:it,extra:x,sub:it?`${it.place} · ${it.count} da`:`Neu · kommt nach ${x.place||"Küche"}`,auto:false});
+  });
+  return out;
+}
+
+function renderChips(all){
+  const used=placeOrder().filter(p=>all.some(i=>i.place===p));
+  if(filter && !used.includes(filter)) filter="";
+  $("#chips").innerHTML=[`<button class="chip" data-f="" aria-pressed="${!filter}">Alle</button>`]
+    .concat(used.map(p=>`<button class="chip" data-f="${esc(p)}" aria-pressed="${filter===p}">${esc(p)}</button>`)).join("");
+}
+
+function rowHtml(i){
+  const cls=i.count===0?"zero":i.count===1?"low":"";
+  const pill=i.count===0?`<span class="pill zero">Leer</span>`:i.count===1?`<span class="pill low">Nur noch 1</span>`:"";
+  return `<div class="row ${cls}">
+    <button class="name" data-edit="${i.id}" aria-label="${esc(i.name)} bearbeiten"><b>${esc(i.name)}</b>${pill}</button>
+    <div class="stepper">
+      <button data-dec="${i.id}" aria-label="Eins weniger ${esc(i.name)}" ${i.count===0?"disabled":""}>−</button>
+      <output aria-live="polite">${i.count}</output>
+      <button class="plus" data-inc="${i.id}" aria-label="Eins mehr ${esc(i.name)}">+</button>
+    </div></div>`;
+}
+
+function renderStock(all){
+  renderChips(all);
+  const el=$("#view-stock");
+  if(mode==="loading"){el.innerHTML="";return}
+  if(!all.length){
+    el.innerHTML=`<div class="empty">
+      <h3>Noch keine Vorräte</h3>
+      <p>Lege dein erstes Produkt mit „+ Produkt“ an. Wähle dabei den Lagerort und die Stückzahl. Mit Plus und Minus zählst du später mit, was du verbrauchst oder einräumst.</p>
+      <p>Sobald nur noch 1 Stück da ist, landet das Produkt auf der Einkaufsliste.</p>
+      <div class="inline"><button class="btn orange" data-new>Erstes Produkt anlegen</button><button class="btn ghost" data-examples>Beispiele zum Ausprobieren</button></div>
+    </div>`;return;
+  }
+  const q=query.trim().toLowerCase();
+  const vis=all.filter(i=>(!filter||i.place===filter)&&(!q||i.name.toLowerCase().includes(q)));
+  if(!vis.length){el.innerHTML=`<div class="empty"><h3>Nichts gefunden</h3><p>Kein Produkt passt zu „${esc(query)}“${filter?` in ${esc(filter)}`:""}.</p><div class="inline"><button class="btn orange" data-new>„${esc(query||"Neues Produkt")}“ anlegen</button></div></div>`;return}
+  el.innerHTML=placeOrder().map(p=>{
+    const g=sorted(vis.filter(i=>i.place===p)); if(!g.length) return "";
+    const lowN=g.filter(isLow).length;
+    return `<h2 class="place">${esc(p)}<small>${g.length} Produkte${lowN?` · ${lowN} knapp`:""}</small></h2><div class="list">${g.map(rowHtml).join("")}</div>`;
+  }).join("");
+}
+
+function shopRow(e){
+  const on=checked.has(e.key), q=checked.get(e.key)||1, k=esc(e.key);
+  const cls=e.auto?(e.item.count===0?"zero":"low"):"";
+  return `<div class="row ${on?"done":""} ${cls}">
+    <button class="check" role="checkbox" aria-checked="${on}" data-check="${k}" aria-label="${esc(e.name)} abhaken"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg></button>
+    <div class="meta"><b>${esc(e.name)}</b><small>${esc(e.sub)}</small></div>
+    ${on?`<div class="buyqty">gekauft<div class="stepper"><button data-bdec="${k}" aria-label="Weniger gekauft" ${q<=1?"disabled":""}>−</button><output>${q}</output><button class="plus" data-binc="${k}" aria-label="Mehr gekauft">+</button></div></div>`
+       :(e.auto?"":`<button class="xbtn" data-delextra="${esc(e.extra.id)}" aria-label="${esc(e.name)} von der Liste nehmen">×</button>`)}
+  </div>`;
+}
+function renderShop(shop){
+  const el=$("#view-shop");
+  const keys=new Set(shop.map(e=>e.key));
+  for(const k of [...checked.keys()]) if(!keys.has(k)) checked.delete(k);
+  const autoL=shop.filter(e=>e.auto), ownL=shop.filter(e=>!e.auto);
+  const n=checked.size;
+  const draft=$("#shopName")?$("#shopName").value:"";
+  const hadFocus=document.activeElement&&document.activeElement.id==="shopName";
+  const draftPlace=$("#shopPlace")?$("#shopPlace").value:"";
+  const draftItem=draft&&findItemByName(draft);
+  el.innerHTML=`
+    <form class="addshop" id="shopForm" autocomplete="off">
+      <label for="shopName">Auf die Einkaufsliste</label>
+      <div class="inline"><input id="shopName" list="productNames" placeholder="z. B. Mehl oder Batterien" maxlength="60" value="${esc(draft)}"><button class="btn orange" type="submit">Hinzufügen</button></div>
+      <datalist id="productNames">${sorted([...items.values()]).map(i=>`<option value="${esc(i.name)}">`).join("")}</datalist>
+      <div class="newplace" id="newPlaceRow" ${draft&&!draftItem?"":"hidden"}><span>Neues Produkt, kommt nach dem Einkauf nach</span><select id="shopPlace" aria-label="Lagerort für das neue Produkt">${placeOrder().map(p=>`<option>${esc(p)}</option>`).join("")}</select></div>
+    </form>
+    ${shop.length?"":`<div class="empty"><h3>Alles da</h3><p>Gerade muss nichts nachgekauft werden. Produkte mit nur noch 1 Stück erscheinen hier von selbst. Alles andere trägst du oben ein.</p></div>`}
+    ${autoL.length?`<h2 class="place">Fast leer<small>automatisch</small></h2><div class="list shop">${autoL.map(shopRow).join("")}</div>`:""}
+    ${ownL.length?`<h2 class="place">Zusätzlich gebraucht<small>${ownL.length} eingetragen</small></h2><div class="list shop">${ownL.map(shopRow).join("")}</div>`:""}
+    ${shop.length?`<div class="shopbar"><button class="btn orange" data-commit ${n?"":"disabled"}>${n?`${n} ${n===1?"Produkt":"Produkte"} in den Bestand übernehmen`:"Abhaken, was im Korb liegt"}</button></div>`:""}`;
+  if(draftPlace) $("#shopPlace").value=draftPlace;
+  if(hadFocus){const f=$("#shopName");f.focus();f.setSelectionRange(draft.length,draft.length)}
+}
+function addToShop(){
+  const name=$("#shopName").value.trim(); if(!name) return;
+  const it=findItemByName(name);
+  const dupe=[...extras.values()].some(x=>it?x.itemId===it.id:x.name.toLowerCase()===name.toLowerCase());
+  $("#shopName").value="";
+  if(it&&isLow(it)){toast(`${it.name} steht schon auf der Liste`);render();return}
+  if(dupe){toast(`${name} steht schon auf der Liste`);render();return}
+  writeExtra({id:uid(),name:it?it.name:name,itemId:it?it.id:"",place:it?it.place:($("#shopPlace")?$("#shopPlace").value:"Küche"),addedAt:Date.now()});
+  toast(`${it?it.name:name} steht auf der Einkaufsliste`);
+}
+async function commitShop(){
+  const shop=shopEntries(), sel=new Map(checked); let n=0;
+  for(const e of shop){
+    if(!sel.has(e.key)) continue;
+    const q=sel.get(e.key)||1; n++;
+    let it=e.item||findItemByName(e.name);
+    if(it) await writeItem({...it,count:it.count+q});
+    else{const place=e.extra.place||"Küche";if(!places.includes(place)){places.push(place);savePlaces()}
+      it={id:uid(),name:e.name,place,count:q};await writeItem(it)}
+    for(const x of [...extras.values()]) if(x.id===(e.extra&&e.extra.id)||x.itemId===it.id) await removeExtra(x.id);
+  }
+  checked.clear();render();toast(`${n} ${n===1?"Produkt":"Produkte"} eingeräumt`);
+}
+
+function renderMore(all){
+  const counts={}; all.forEach(i=>counts[i.place]=(counts[i.place]||0)+1);
+  const shared=mode==="shared";
+  $("#view-more").innerHTML=`
+    <div class="card">
+      <h3>Lagerorte</h3>
+      <p>Diese Orte stehen beim Anlegen eines Produkts zur Auswahl.</p>
+      <div class="placelist">${placeOrder().map(p=>`<div class="placeitem"><span>${esc(p)}</span><small>${counts[p]||0} Produkte</small>${counts[p]?"":`<button data-delplace="${esc(p)}" aria-label="${esc(p)} entfernen">Entfernen</button>`}</div>`).join("")}</div>
+      <form class="inline" id="placeForm"><input id="newPlace" placeholder="Neuer Lagerort, z. B. Garage" aria-label="Neuer Lagerort" maxlength="40"><button class="btn" type="submit">Hinzufügen</button></form>
+    </div>
+    <div class="card">
+      <h3>Sicherung</h3>
+      <p>Speichere deinen Bestand als CSV-Datei. Sie lässt sich in Excel öffnen und bearbeiten. Beim Einlesen werden Produkte mit gleichem Namen und Lagerort aktualisiert, neue kommen dazu.</p>
+      <div class="inline"><button class="btn" data-export ${all.length?"":"disabled"}>Als Excel-Datei (CSV) sichern</button><label class="btn ghost" for="importFile" style="text-align:center">Datei einlesen</label><input type="file" id="importFile" accept=".csv,text/csv,.txt" hidden></div>
+      <p class="status">Spalten: Name; Lagerort; Anzahl</p>
+    </div>
+    <div class="card">
+      <h3>Gemeinsam nutzen</h3>
+      <p>${shared?"Der Bestand wird gemeinsam gespeichert. Teile diese Seite über das Teilen-Menü mit deinem Haushalt und gib den anderen mindestens die Stufe „Mitwirkende“, damit sie mitzählen können. Änderungen erscheinen bei allen sofort.":"Gerade wird nur in diesem Browser gespeichert. Öffne die Seite in der Claude-App, angemeldet, damit der Bestand gemeinsam gespeichert wird."}</p>
+    </div>`;
+}
+
+/* ---------- sheet (add / edit) ---------- */
+function openSheet(item, presetName){
+  const isNew=!item;
+  const it=item||{id:uid(),name:presetName||"",place:filter||placeOrder()[0]||"Küche",count:1};
+  const opts=placeOrder().map(p=>`<option ${p===it.place?"selected":""}>${esc(p)}</option>`).join("");
+  $("#sheetHost").innerHTML=`<div class="scrim" id="scrim"><form class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h3 id="sheetTitle">${isNew?"Produkt anlegen":"Produkt bearbeiten"}</h3>
+    <div class="field"><label for="fName">Name</label><input id="fName" required maxlength="60" value="${esc(it.name)}" placeholder="z. B. Haferflocken" autocomplete="off"></div>
+    <div class="field"><label for="fPlace">Lagerort</label><select id="fPlace">${opts}</select></div>
+    <div class="field"><label>Anzahl (Stück)</label><div class="stepper"><button type="button" id="fDec" aria-label="Weniger">−</button><output id="fCount">${it.count}</output><button type="button" class="plus" id="fInc" aria-label="Mehr">+</button></div></div>
+    <div id="delZone"></div>
+    <div class="actions">${isNew?"":`<button type="button" class="btn danger" id="fDel">Löschen</button>`}<button type="button" class="btn ghost" id="fCancel">Abbrechen</button><button type="submit" class="btn orange">Speichern</button></div>
+  </form></div>`;
+  let count=it.count;
+  const out=$("#fCount");
+  $("#fDec").onclick=()=>{count=Math.max(0,count-1);out.textContent=count};
+  $("#fInc").onclick=()=>{count++;out.textContent=count};
+  $("#fCancel").onclick=closeSheet;
+  $("#scrim").addEventListener("click",e=>{if(e.target.id==="scrim")closeSheet()});
+  if(!isNew) $("#fDel").onclick=()=>{
+    $("#delZone").innerHTML=`<div class="confirm">„${esc(it.name)}“ wirklich löschen?<div class="inline"><button type="button" class="btn danger" id="fDelYes">Ja, löschen</button><button type="button" class="btn ghost" id="fDelNo">Behalten</button></div></div>`;
+    $("#fDelYes").onclick=()=>{removeItem(it.id);closeSheet();toast(`${it.name} gelöscht`)};
+    $("#fDelNo").onclick=()=>$("#delZone").innerHTML="";
+  };
+  $("#sheet").onsubmit=e=>{
+    e.preventDefault();
+    const name=$("#fName").value.trim(); if(!name) return;
+    const place=$("#fPlace").value;
+    if(isNew){const dup=[...items.values()].find(i=>i.name.toLowerCase()===name.toLowerCase()&&i.place===place);
+      if(dup){toast(`${name} gibt es in ${place} schon – Anzahl wurde erhöht`);writeItem({...dup,count:dup.count+count});closeSheet();return}}
+    writeItem({...it,name,place,count}); closeSheet();
+    if(isNew) toast(`${name} angelegt`);
+  };
+  setTimeout(()=>{if(isNew && !presetName) $("#fName").focus()},50);
+}
+function closeSheet(){$("#sheetHost").innerHTML=""}
+
+let toastT;
+function toast(msg){clearTimeout(toastT);$("#toastHost").innerHTML=`<div class="toast" role="status">${esc(msg)}</div>`;toastT=setTimeout(()=>$("#toastHost").innerHTML="",2800)}
+
+/* ---------- CSV ---------- */
+function toCsv(){
+  const rows=[["Name","Lagerort","Anzahl"]].concat(placeOrder().flatMap(p=>sorted([...items.values()].filter(i=>i.place===p)).map(i=>[i.name,i.place,i.count])));
+  return "﻿"+rows.map(r=>r.map(v=>{v=String(v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(";")).join("\r\n");
+}
+function parseCsv(text){
+  text=text.replace(/^﻿/,"");
+  const sep=(text.split("\n")[0].match(/;/g)||[]).length>=(text.split("\n")[0].match(/,/g)||[]).length?";":",";
+  const rows=[];let row=[],cur="",q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
+    else if(c==='"')q=true; else if(c===sep){row.push(cur);cur=""} else if(c==="\n"){row.push(cur);rows.push(row);row=[];cur=""} else if(c!=="\r")cur+=c}
+  if(cur||row.length){row.push(cur);rows.push(row)}
+  return rows.filter(r=>r.some(v=>v.trim()));
+}
+async function importCsv(file){
+  const rows=parseCsv(await file.text());
+  if(rows.length&&/name/i.test(rows[0][0]||""))rows.shift();
+  let added=0,updated=0;
+  for(const r of rows){
+    const name=(r[0]||"").trim(); if(!name) continue;
+    const place=(r[1]||"").trim()||"Küche"; const count=Math.max(0,parseInt(r[2],10)||0);
+    if(!places.includes(place)){places.push(place)}
+    const ex=[...items.values()].find(i=>i.name.toLowerCase()===name.toLowerCase()&&i.place===place);
+    if(ex){if(ex.count!==count){await writeItem({...ex,count});updated++}}
+    else{await writeItem({id:uid(),name,place,count});added++}
+  }
+  await savePlaces();
+  toast(`Eingelesen: ${added} neu, ${updated} aktualisiert`);
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button,[data-f]"); if(!t) return;
+  const d=t.dataset;
+  if(d.view){view=d.view;render();window.scrollTo(0,0)}
+  else if(d.f!==undefined){filter=d.f;render()}
+  else if(d.inc) changeCount(d.inc,1);
+  else if(d.dec) changeCount(d.dec,-1);
+  else if(d.edit) openSheet(items.get(d.edit));
+  else if(d.new!==undefined) openSheet(null,query.trim());
+  else if(d.examples!==undefined){for(const [n,p,c] of EXAMPLES){await writeItem({id:uid(),name:n,place:p,count:c})} toast("Beispiele eingefügt – bearbeite oder lösche sie jederzeit")}
+  else if(d.check){checked.has(d.check)?checked.delete(d.check):checked.set(d.check,1);render()}
+  else if(d.binc){checked.set(d.binc,(checked.get(d.binc)||1)+1);render()}
+  else if(d.bdec){checked.set(d.bdec,Math.max(1,(checked.get(d.bdec)||1)-1));render()}
+  else if(d.commit!==undefined) commitShop();
+  else if(d.delextra){const x=extras.get(d.delextra);removeExtra(d.delextra);if(x)toast(`${x.name} von der Liste genommen`)}
+  else if(d.delplace){places=places.filter(p=>p!==d.delplace);savePlaces()}
+  else if(d.export!==undefined){
+    const dl=await (window.claude?.use?.("downloads")??null);
+    const name=`Vorrat-${new Date().toISOString().slice(0,10)}.csv`;
+    if(!dl){toast("Speichern als Datei ist in dieser Ansicht nicht möglich.");return}
+    try{const r=await dl.save({filename:name,data:new Blob([toCsv()],{type:"text/csv"})});if(r&&r.status==="saved")toast("Sicherung gespeichert")}
+    catch(err){if(err&&err.code!=="cancelled"&&err.code!=="declined")toast("Sicherung hat nicht geklappt.")}
+  }
+});
+document.addEventListener("input",e=>{
+  if(e.target.id!=="shopName")return;
+  const v=e.target.value.trim();
+  $("#newPlaceRow").hidden=!v||!!findItemByName(v);
+});
+document.addEventListener("submit",e=>{
+  if(e.target.id==="shopForm"){e.preventDefault();addToShop();return}
+  if(e.target.id!=="placeForm")return; e.preventDefault();
+  const v=$("#newPlace").value.trim(); if(!v)return;
+  if(places.some(p=>p.toLowerCase()===v.toLowerCase())){toast(`${v} gibt es schon`);return}
+  places.push(v);savePlaces();
+});
+document.addEventListener("change",e=>{if(e.target.id==="importFile"&&e.target.files[0]){importCsv(e.target.files[0]);e.target.value=""}});
+$("#q").addEventListener("input",e=>{query=e.target.value;render()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
+
+/* ---------- start ---------- */
+render();
+(async()=>{
+  try{db=await (window.claude?.use?.("db")??null)}catch(e){db=null}
+  if(!db){mode="local";localLoad();render();return}
+  mode="shared";
+  db.collection("items").onSnapshot(snap=>{
+    const next=new Map();
+    snap.docs.forEach(d=>{const v=d.data();const local=items.get(d.id);
+      // keep a count the viewer is still tapping on until it is written
+      const count=pendingTimers.has(d.id)&&local?local.count:Number(v.count)||0;
+      next.set(d.id,{id:d.id,name:String(v.name||"Ohne Namen"),place:String(v.place||"Küche"),count})});
+    items=next;render();
+  },()=>{toast("Die Verbindung ist abgebrochen. Lade die Seite neu.")});
+  db.collection("shopextra").onSnapshot(snap=>{
+    const next=new Map();
+    snap.docs.forEach(d=>{const v=d.data();next.set(d.id,{id:d.id,name:String(v.name||""),itemId:String(v.itemId||""),place:String(v.place||""),addedAt:Number(v.addedAt)||0})});
+    extras=next;render();
+  },()=>{});
+  db.doc("config/places").onSnapshot(s=>{
+    const l=s.exists&&s.data().list; if(Array.isArray(l)&&l.length){places=l.map(String);render()}
+  },()=>{});
+})();
+})();
+</script>
+
+</body></html>
