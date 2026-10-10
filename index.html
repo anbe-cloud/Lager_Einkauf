@@ -111,7 +111,11 @@ nav.tabs button[aria-selected="true"]{color:var(--olive)}
 .placeitem{display:flex;align-items:center;gap:8px}
 .placeitem span{flex:1;min-width:0}
 .placeitem small{color:var(--muted);font-variant-numeric:tabular-nums}
-.placeitem button{border:0;background:none;color:var(--empty);font-weight:700;padding:6px}
+.placeitem .pdel{border:0;background:none;color:var(--empty);font-weight:700;padding:6px}
+.placeitem .pname{flex:1;min-width:0;display:flex;align-items:center;gap:8px;border:0;background:none;padding:6px 0;text-align:left}
+.placeitem .pname span{flex:1;min-width:0}
+.pen{width:13px;height:13px;margin-left:6px;vertical-align:-1px;color:var(--muted);opacity:.7}
+.shop button.meta{border:0;background:none;padding:2px 0;text-align:left}
 .inline{display:flex;gap:8px;flex-wrap:wrap}
 .inline input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px}
 .status{font-size:.82rem;color:var(--muted)}
@@ -146,7 +150,7 @@ nav.tabs button[aria-selected="true"]{color:var(--olive)}
   <main id="view-more" hidden></main>
 </div>
 
-<button class="fab" id="fab" type="button"><span>+</span> Produkt</button>
+<button class="fab" id="fab" type="button" data-new><span>+</span> Produkt</button>
 
 <nav class="tabs" role="tablist">
   <div class="in">
@@ -262,11 +266,12 @@ function renderChips(all){
     .concat(used.map(p=>`<button class="chip" data-f="${esc(p)}" aria-pressed="${filter===p}">${esc(p)}</button>`)).join("");
 }
 
+const PEN=`<svg class="pen" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 2.5l3 3L6 13H3v-3z"/></svg>`;
 function rowHtml(i){
   const cls=i.count===0?"zero":i.count===1?"low":"";
   const pill=i.count===0?`<span class="pill zero">Leer</span>`:i.count===1?`<span class="pill low">Nur noch 1</span>`:"";
   return `<div class="row ${cls}">
-    <button class="name" data-edit="${i.id}" aria-label="${esc(i.name)} bearbeiten"><b>${esc(i.name)}</b>${pill}</button>
+    <button class="name" data-edit="${i.id}" aria-label="${esc(i.name)} bearbeiten"><b>${esc(i.name)}${PEN}</b>${pill}</button>
     <div class="stepper">
       <button data-dec="${i.id}" aria-label="Eins weniger ${esc(i.name)}" ${i.count===0?"disabled":""}>−</button>
       <output aria-live="polite">${i.count}</output>
@@ -301,7 +306,7 @@ function shopRow(e){
   const cls=e.auto?(e.item.count===0?"zero":"low"):"";
   return `<div class="row ${on?"done":""} ${cls}">
     <button class="check" role="checkbox" aria-checked="${on}" data-check="${k}" aria-label="${esc(e.name)} abhaken"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg></button>
-    <div class="meta"><b>${esc(e.name)}</b><small>${esc(e.sub)}</small></div>
+    <button class="meta" data-shopedit="${k}" aria-label="${esc(e.name)} bearbeiten"><b>${esc(e.name)}${PEN}</b><small>${esc(e.sub)}</small></button>
     ${on?`<div class="buyqty">gekauft<div class="stepper"><button data-bdec="${k}" aria-label="Weniger gekauft" ${q<=1?"disabled":""}>−</button><output>${q}</output><button class="plus" data-binc="${k}" aria-label="Mehr gekauft">+</button></div></div>`
        :(e.auto?"":`<button class="xbtn" data-delextra="${esc(e.extra.id)}" aria-label="${esc(e.name)} von der Liste nehmen">×</button>`)}
   </div>`;
@@ -319,7 +324,7 @@ function renderShop(shop){
   el.innerHTML=`
     <form class="addshop" id="shopForm" autocomplete="off">
       <label for="shopName">Auf die Einkaufsliste</label>
-      <div class="inline"><input id="shopName" list="productNames" placeholder="z. B. Mehl oder Batterien" maxlength="60" value="${esc(draft)}"><button class="btn orange" type="submit">Hinzufügen</button></div>
+      <div class="inline"><input id="shopName" spellcheck="true" lang="de" list="productNames" placeholder="z. B. Mehl oder Batterien" maxlength="60" value="${esc(draft)}"><button class="btn orange" type="submit">Hinzufügen</button></div>
       <datalist id="productNames">${sorted([...items.values()]).map(i=>`<option value="${esc(i.name)}">`).join("")}</datalist>
       <div class="newplace" id="newPlaceRow" ${draft&&!draftItem?"":"hidden"}><span>Neues Produkt, kommt nach dem Einkauf nach</span><select id="shopPlace" aria-label="Lagerort für das neue Produkt">${placeOrder().map(p=>`<option>${esc(p)}</option>`).join("")}</select></div>
     </form>
@@ -361,7 +366,8 @@ function renderMore(all){
     <div class="card">
       <h3>Lagerorte</h3>
       <p>Diese Orte stehen beim Anlegen eines Produkts zur Auswahl.</p>
-      <div class="placelist">${placeOrder().map(p=>`<div class="placeitem"><span>${esc(p)}</span><small>${counts[p]||0} Produkte</small>${counts[p]?"":`<button data-delplace="${esc(p)}" aria-label="${esc(p)} entfernen">Entfernen</button>`}</div>`).join("")}</div>
+      <div class="placelist">${placeOrder().map(p=>`<div class="placeitem"><button class="pname" data-editplace="${esc(p)}" aria-label="${esc(p)} umbenennen"><span>${esc(p)}${PEN}</span><small>${counts[p]||0} Produkte</small></button>${counts[p]?"":`<button class="pdel" data-delplace="${esc(p)}" aria-label="${esc(p)} entfernen">Entfernen</button>`}</div>`).join("")}</div>
+      <p>Tippe auf einen Lagerort, um ihn umzubenennen.</p>
       <form class="inline" id="placeForm"><input id="newPlace" placeholder="Neuer Lagerort, z. B. Garage" aria-label="Neuer Lagerort" maxlength="40"><button class="btn" type="submit">Hinzufügen</button></form>
     </div>
     <div class="card">
@@ -383,7 +389,7 @@ function openSheet(item, presetName){
   const opts=placeOrder().map(p=>`<option ${p===it.place?"selected":""}>${esc(p)}</option>`).join("");
   $("#sheetHost").innerHTML=`<div class="scrim" id="scrim"><form class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <h3 id="sheetTitle">${isNew?"Produkt anlegen":"Produkt bearbeiten"}</h3>
-    <div class="field"><label for="fName">Name</label><input id="fName" required maxlength="60" value="${esc(it.name)}" placeholder="z. B. Haferflocken" autocomplete="off"></div>
+    <div class="field"><label for="fName">Name</label><input id="fName" spellcheck="true" lang="de" required maxlength="60" value="${esc(it.name)}" placeholder="z. B. Haferflocken" autocomplete="off"></div>
     <div class="field"><label for="fPlace">Lagerort</label><select id="fPlace">${opts}</select></div>
     <div class="field"><label>Anzahl (Stück)</label><div class="stepper"><button type="button" id="fDec" aria-label="Weniger">−</button><output id="fCount">${it.count}</output><button type="button" class="plus" id="fInc" aria-label="Mehr">+</button></div></div>
     <div id="delZone"></div>
@@ -412,6 +418,46 @@ function openSheet(item, presetName){
   setTimeout(()=>{if(isNew && !presetName) $("#fName").focus()},50);
 }
 function closeSheet(){$("#sheetHost").innerHTML=""}
+
+/* einfaches Formular für eigene Einkaufslisten-Einträge und Lagerorte */
+function openTextSheet({title,label,value,extraHtml="",onSave,onDelete,deleteText}){
+  $("#sheetHost").innerHTML=`<div class="scrim" id="scrim"><form class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h3 id="sheetTitle">${esc(title)}</h3>
+    <div class="field"><label for="tName">${esc(label)}</label><input id="tName" required maxlength="60" value="${esc(value)}" autocomplete="off" spellcheck="true" lang="de"></div>
+    ${extraHtml}
+    <div id="delZone"></div>
+    <div class="actions">${onDelete?`<button type="button" class="btn danger" id="tDel">${esc(deleteText||"Löschen")}</button>`:""}<button type="button" class="btn ghost" id="tCancel">Abbrechen</button><button type="submit" class="btn orange">Speichern</button></div>
+  </form></div>`;
+  $("#tCancel").onclick=closeSheet;
+  $("#scrim").addEventListener("click",e=>{if(e.target.id==="scrim")closeSheet()});
+  if(onDelete) $("#tDel").onclick=()=>{onDelete();closeSheet()};
+  $("#sheet").onsubmit=e=>{e.preventDefault();const v=$("#tName").value.trim();if(!v)return;if(onSave(v)!==false)closeSheet()};
+  setTimeout(()=>{const f=$("#tName");f.focus();f.setSelectionRange(f.value.length,f.value.length)},50);
+}
+function editShopEntry(key){
+  const e=shopEntries().find(x=>x.key===key); if(!e) return;
+  if(e.item){openSheet(e.item);return}
+  const x=e.extra;
+  openTextSheet({title:"Eintrag bearbeiten",label:"Name",value:x.name,
+    extraHtml:`<div class="field"><label for="tPlace">Kommt nach dem Einkauf nach</label><select id="tPlace">${placeOrder().map(p=>`<option ${p===x.place?"selected":""}>${esc(p)}</option>`).join("")}</select></div>`,
+    onSave:v=>{
+      const it=findItemByName(v);
+      writeExtra({...x,name:it?it.name:v,itemId:it?it.id:"",place:it?it.place:$("#tPlace").value});
+      toast(it?`Mit ${it.name} aus dem Bestand verknüpft`:`${v} gespeichert`);
+    },
+    onDelete:()=>{removeExtra(x.id);toast(`${x.name} von der Liste genommen`)},deleteText:"Von der Liste nehmen"});
+}
+function editPlace(old){
+  openTextSheet({title:"Lagerort umbenennen",label:"Name",value:old,onSave:v=>{
+    if(v===old) return;
+    if(places.some(p=>p!==old&&p.toLowerCase()===v.toLowerCase())){toast(`${v} gibt es schon`);return false}
+    if(places.includes(old)) places=places.map(p=>p===old?v:p); else places.push(v);
+    if(filter===old) filter=v;
+    for(const it of [...items.values()]) if(it.place===old) writeItem({...it,place:v});
+    for(const x of [...extras.values()]) if(x.place===old) writeExtra({...x,place:v});
+    savePlaces(); toast(`Umbenannt in ${v}`);
+  }});
+}
 
 let toastT;
 function toast(msg){clearTimeout(toastT);$("#toastHost").innerHTML=`<div class="toast" role="status">${esc(msg)}</div>`;toastT=setTimeout(()=>$("#toastHost").innerHTML="",2800)}
@@ -462,6 +508,8 @@ document.addEventListener("click",async e=>{
   else if(d.binc){checked.set(d.binc,(checked.get(d.binc)||1)+1);render()}
   else if(d.bdec){checked.set(d.bdec,Math.max(1,(checked.get(d.bdec)||1)-1));render()}
   else if(d.commit!==undefined) commitShop();
+  else if(d.shopedit) editShopEntry(d.shopedit);
+  else if(d.editplace) editPlace(d.editplace);
   else if(d.delextra){const x=extras.get(d.delextra);removeExtra(d.delextra);if(x)toast(`${x.name} von der Liste genommen`)}
   else if(d.delplace){places=places.filter(p=>p!==d.delplace);savePlaces()}
   else if(d.export!==undefined){
